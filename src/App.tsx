@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
+import Dock from "./components/dock/dock";
+import Grid from "./components/grid/grid";
 
-interface Cell {
+
+export interface Cell {
   x: number;
   y: number;
   hit?: boolean;
@@ -16,6 +19,12 @@ interface Enemy {
   targetStack: Cell[];
   mode: "HUNT" | "KILL";
   targetList: Cell[];
+}
+
+export interface Ship {
+  type: string;
+  size: number;
+  placed: boolean;
 }
 
 const message = (text: string) => {
@@ -47,6 +56,8 @@ function App() {
     { type: "cruiser", size: 3, placed: false },
     { type: "destroyer", size: 2, placed: false },
   ]);
+
+  const [canFire, setCanFire] = useState<boolean>(false);
 
   let startCell: Cell;
   let endCell: Cell;
@@ -92,7 +103,7 @@ function App() {
         if (cell.hit || cell.miss) {
           break;
         }
-        fire(enemyGrid, cell);
+        if (!fire(enemyGrid, cell))
         enemyFire();
         break;
       case "GAMEOVER":
@@ -103,9 +114,7 @@ function App() {
     }
   };
 
-  const startShipPlacement = (cell: Cell): void => {
-    startCell = cell;
-  };
+  
 
   const findCell = (grid: Cell[][], x: number, y: number): Cell | undefined => {
     return grid
@@ -113,7 +122,12 @@ function App() {
       .find((cell) => cell.x === x && cell.y === y);
   };
 
-  const endShipPlacement = (cell: Cell): void => {
+  const handleShipPlacement = (startEnd:string, cell: Cell): void => {
+    if(startEnd === "start") {
+      startCell = cell;
+      return;
+    }
+  
     endCell = cell;
     const x1 = startCell.x;
     const y1 = startCell.y;
@@ -164,8 +178,9 @@ function App() {
       }
 
       if (!ships.find((s) => !s.placed)) {
-        console.log("all ships placed");
         placeEnemyShips();
+        console.log("all ships placed");
+        setCanFire(true);
       }
     }
   };
@@ -200,14 +215,13 @@ function App() {
       if (!grid.flat().find((c) => c.type && !c.hit)) {
         message("GAME OVER");
         setGameState("GAMEOVER");
+        return true;
       }
-
-      return true;
     } else {
       // If the cell is not a ship, mark as miss
       gridCell.miss = true;
-      return false;
     }
+    return false;
   };
 
   const placeEnemyShips = (): void => {
@@ -216,8 +230,8 @@ function App() {
       if (enemyShips.hasOwnProperty(s)) {
         const ship = enemyShips[s];
         while (!ship.placed) {
-          const xStart = Math.round(Math.random() * 10) % 9;
-          const yStart = Math.round(Math.random() * 10) % 9;
+          const xStart = Math.round(Math.random() * 10) % 10;
+          const yStart = Math.round(Math.random() * 10) % 10;
           const dir = Math.round(Math.random()) === 0 ? "H" : "V";
           const length = ship.size;
 
@@ -259,9 +273,9 @@ function App() {
 
   const enemyFire = () => {
     console.log('enemyFire')
-    calculateProbability(ships, playerGrid);
+    //calculateProbability(ships, playerGrid);
 
-    const targetCells = probGrid
+    const targetCells = calculateProbability(ships, playerGrid)
       .reduce((acc, curr) => acc.concat(curr), [])
       .filter((c) => c.prob === 1);
     const targetCell = targetCells.pop()!;
@@ -338,10 +352,11 @@ function App() {
       .reduce((acc, curr) => acc.concat(curr), [])
       .filter((c) => c.count)
       .reduce((acc, curr) => Math.max(acc, curr.count || 0), 0);
+    
+      tempGrid = tempGrid.map((row) => row.map((c) => ({ ...c, prob: c.count! / max })));
 
-    setProbGrid(
-      tempGrid.map((row) => row.map((c) => ({ ...c, prob: c.count! / max })))
-    );
+    setProbGrid(tempGrid);
+    return tempGrid;
   };
   return (
     <div className="App">
@@ -349,72 +364,13 @@ function App() {
         React Battleship
         <hr />
         Enemy
-        {enemyGrid.map((row, i) => (
-          <div className="row" key={i}>
-            {row.map((cell, j) => (
-              <div
-                className={[
-                  "cell",
-                  cell.type ? "ship" : "",
-                  cell.hit ? "hit" : "",
-                  cell.miss ? "miss" : "",
-                  cell.sunk ? "sunk" : "",
-                ].join(" ")}
-                key={j}
-                onClick={() => {
-                  playerFire(cell);
-                }}
-              ></div>
-            ))}
-          </div>
-        ))}
+        <Grid grid={enemyGrid} canFire={canFire} showShips={true} onFire={playerFire} onShipPlacement={()=>{}}/>
+        
         Player
-        {playerGrid.map((row, i) => (
-          <div className="row" key={i}>
-            {row.map((cell, j) => (
-              <div
-                className={[
-                  "cell",
-                  cell.type ? "ship" : "",
-                  cell.hit ? "hit" : "",
-                  cell.miss ? "miss" : "",
-                  cell.sunk ? "sunk" : "",
-                ].join(" ")}
-                key={j}
-                onMouseDown={() => {
-                  startShipPlacement(cell);
-                }}
-                onMouseUp={() => {
-                  endShipPlacement(cell);
-                }}
-              ></div>
-            ))}
-          </div>
-        ))}
-        <div>
-          {ships
-            .filter((row) => !row.placed)
-            .map((row, i) => (
-              <div key={i}>
-                {row.type} {row.size}
-              </div>
-            ))}
-        </div>
-        <div className="ship-list">
-          {ships.map((ship) => (
-            <div key={ship.type} className="ship-container" >
-              {[...Array(ship.size)].map((s, i) => (
-                <div
-                  key={`${ship.type}:${i}`}
-                  className={`ship-block  ${ship.type} ${ship.placed ? "placed" : ""}`}
-                >
-                  
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
+        <Grid grid={playerGrid} canFire={false} showShips={true} onShipPlacement={handleShipPlacement}  />
 
+        
+        <Dock ships={ships} />
 
         <div className="probgrid">
           {probGrid.map((row,i)=>(
