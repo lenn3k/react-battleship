@@ -1,0 +1,179 @@
+.sea {
+    background: linear-gradient(to bottom, #0080ff, #004d99);
+    position: relative;
+    overflow: hidden;
+}
+
+/* .sea:after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.2) 25%, transparent 50%);
+    transform: rotate(45deg) scale(1.5);
+    top: 0%;
+    left: 0%;
+  } */
+
+.ship {
+    background-image: url('../../assets/images/ships.png');
+    background-repeat: no-repeat;
+    width: 25px;
+    height: 25px;
+    position: relative;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+}
+
+.cell {
+    border: black 1px dotted;
+    width: 25px;
+    height: 25px;
+}
+
+.hit {
+    background-color: #990000;
+}
+.hit::after {
+    content: 'X';
+    color: #990000;
+    height: 25px;
+    width: 25px;
+}
+
+.miss {
+    background-color: #e1e1e1bf;
+}
+
+.sunk {
+    background-color: #5a0000dd;
+}
+
+
+.destroyer-0-H {
+    background-position: 0 0;
+}
+.destroyer-1-H {
+    background-position: -25px 0px;
+}
+
+.cruiser-0-H {
+    background-position: 0px -25px;
+}
+.cruiser-1-H {
+    background-position: -25px -25px;
+}
+.cruiser-2-H {
+    background-position: -50px -25px;
+}
+.submarine-0-H {
+    background-position: 0px -50px;
+}
+.submarine-1-H {
+    background-position: -25px -50px;
+}
+.submarine-2-H {
+    background-position: -50px -50px;
+}
+.battleship-0-H {
+    background-position: 0px -75px;
+}
+.battleship-1-H {
+    background-position: -25px -75px;
+}
+.battleship-2-H {
+    background-position: -50px -75px;
+}
+.battleship-3-H {
+    background-position: -75px -75px;
+}
+
+.carrier-0-H {
+    background-position: 0px -100px;
+}
+.carrier-1-H {
+    background-position: -25px -100px;
+}
+.carrier-2-H {
+    background-position: -50px -100px;
+}
+.carrier-3-H {
+    background-position: -75px -100px;
+}
+.carrier-4-H {
+    background-position: -100px -100px;
+}
+
+.destroyer-0-V {
+    background-position: 0px 0px;
+    transform: rotate(90deg);
+}
+.destroyer-1-V {
+    background-position: -25px 0px;
+    transform: rotate(90deg);
+}
+
+.cruiser-0-V {
+    background-position: 0px -25px;
+    transform: rotate(90deg);
+}
+.cruiser-1-V {
+    background-position: -25px -25px;
+    transform: rotate(90deg);
+}
+.cruiser-2-V {
+    background-position: -50px -25px;
+    transform: rotate(90deg);
+}
+.submarine-0-V {
+    background-position: 0px -50px;
+    transform: rotate(90deg);
+}
+.submarine-1-V {
+    background-position: -25px -50px;
+    transform: rotate(90deg);
+}
+.submarine-2-V {
+    background-position: -50px -50px;
+    transform: rotate(90deg);
+}
+.battleship-0-V {
+    background-position: 0px -75px;
+    transform: rotate(90deg);
+}
+.battleship-1-V {
+    background-position: -25px -75px;
+    transform: rotate(90deg);
+}
+.battleship-2-V {
+    background-position: -50px -75px;
+    transform: rotate(90deg);
+}
+.battleship-3-V {
+    background-position: -75px -75px;
+    transform: rotate(90deg);
+}
+
+.carrier-0-V {
+    background-position: 0px -100px;
+    transform: rotate(90deg);
+}
+.carrier-1-V {
+    background-position: -25px -100px;
+    transform: rotate(90deg);
+}
+.carrier-2-V {
+    background-position: -50px -100px;
+    transform: rotate(90deg);
+}
+.carrier-3-V {
+    background-position: -75px -100px;
+    transform: rotate(90deg);
+}
+.carrier-4-V {
+    background-position: -100px -100px;
+    transform: rotate(90deg);
+}

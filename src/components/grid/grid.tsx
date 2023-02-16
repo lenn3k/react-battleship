@@ -1,6 +1,8 @@
 import * as React from "react";
 import { Cell } from "../../App";
 
+import "./grid.css";
+
 const Grid = (props: any) => {
   const grid = props.grid as Cell[][];
   const showShips = props.showShips;
@@ -22,7 +24,7 @@ const Grid = (props: any) => {
   };
 
   return (
-    <div>
+    <div className="sea">
       {grid.map((row, i) => (
         <div className="row" key={i}>
           {row.map((cell, j) => (
@@ -33,6 +35,7 @@ const Grid = (props: any) => {
                 cell.hit ? "hit" : "",
                 cell.miss ? "miss" : "",
                 cell.sunk ? "sunk" : "",
+                cell.direction ? cell.type+"-"+cell.number+"-"+cell.direction :"",
               ].join(" ")}
               key={j}
               onMouseDown={() => {

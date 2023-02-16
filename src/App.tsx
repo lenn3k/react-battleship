@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
+import Console from "./components/console/console";
 import Dock from "./components/dock/dock";
 import Grid from "./components/grid/grid";
-
 
 export interface Cell {
   x: number;
@@ -13,6 +13,8 @@ export interface Cell {
   count?: number;
   prob?: number;
   sunk?: boolean;
+  direction?: string;
+  number?: number;
 }
 
 interface Enemy {
@@ -26,10 +28,6 @@ export interface Ship {
   size: number;
   placed: boolean;
 }
-
-const message = (text: string) => {
-  console.log("MESSAGE: " + text);
-};
 
 const copy = (element: any) => {
   return JSON.parse(JSON.stringify(element));
@@ -59,11 +57,12 @@ function App() {
 
   const [canFire, setCanFire] = useState<boolean>(false);
 
+  const [messages, setMessages] = useState<string[]>([]);
+
   let startCell: Cell;
   let endCell: Cell;
 
   useEffect(() => {
-    console.log("effect", gameState);
     if (gameState !== "INIT") {
       return;
     }
@@ -90,31 +89,30 @@ function App() {
     }
     setPlayerGrid(copy(tempGrid));
     setEnemyGrid(copy(tempGrid));
-    console.log(playerGrid);
   }, []);
 
   const playerFire = (cell: Cell) => {
-    console.log('playerFire');
     switch (gameState) {
       case "PLACEMENT":
-        message("Place your ships before firing!");
+        sendMessage("Place your ships before firing!");
         break;
       case "COMBAT":
         if (cell.hit || cell.miss) {
           break;
         }
-        if (!fire(enemyGrid, cell))
-        enemyFire();
+        if (!fire(enemyGrid, cell)) enemyFire();
         break;
       case "GAMEOVER":
-        message("The game is over!");
+        sendMessage("The game is over!");
         break;
       default:
         break;
     }
   };
 
-  
+  const sendMessage = (text: string) => {
+    setMessages(messages.concat(text));
+  };
 
   const findCell = (grid: Cell[][], x: number, y: number): Cell | undefined => {
     return grid
@@ -122,12 +120,12 @@ function App() {
       .find((cell) => cell.x === x && cell.y === y);
   };
 
-  const handleShipPlacement = (startEnd:string, cell: Cell): void => {
-    if(startEnd === "start") {
+  const handleShipPlacement = (startEnd: string, cell: Cell): void => {
+    if (startEnd === "start") {
       startCell = cell;
       return;
     }
-  
+
     endCell = cell;
     const x1 = startCell.x;
     const y1 = startCell.y;
@@ -139,7 +137,7 @@ function App() {
     }
     const xStart = Math.min(x1, x2);
     const yStart = Math.min(y1, y2);
-    const dir = x1 < x2 ? "V" : x2 < x1 ? "V" : y1 < y2 ? "H" : "H";
+    const dir = x1 < x2 ? "H" : x2 < x1 ? "H" : y1 < y2 ? "V" : "V";
     const length = Math.abs(x1 - x2) + Math.abs(y1 - y2) + 1;
 
     // calculate length of ship to place
@@ -150,15 +148,23 @@ function App() {
       // get all cells
       const shipCells = [];
       switch (dir) {
-        case "V":
+        case "H":
           for (let n = xStart; n < xStart + length; n++) {
-            shipCells.push(findCell(playerGrid, n, yStart));
+            shipCells.push({
+              ...findCell(playerGrid, n, yStart),
+              number: n - xStart,
+              direction: dir,
+            } as Cell);
           }
           break;
 
-        case "H":
+        case "V":
           for (let n = yStart; n < yStart + length; n++) {
-            shipCells.push(findCell(playerGrid, xStart, n));
+            shipCells.push({
+              ...findCell(playerGrid, xStart, n),
+              number: n - yStart,
+              direction: dir,
+            } as Cell);
           }
           break;
         default:
@@ -170,6 +176,8 @@ function App() {
         shipCells.forEach((shipCell) => {
           const gridCell = findCell(playerGrid, shipCell!.x, shipCell!.y);
           gridCell!.type = ship.type;
+          gridCell!.number = shipCell.number;
+          gridCell!.direction = shipCell.direction;
         });
         ship.placed = true;
         setShips(
@@ -179,7 +187,6 @@ function App() {
 
       if (!ships.find((s) => !s.placed)) {
         placeEnemyShips();
-        console.log("all ships placed");
         setCanFire(true);
       }
     }
@@ -202,7 +209,7 @@ function App() {
       // Check if the ship is destroyed
       if (!grid.flat().find((c) => c.type === gridCell.type && !c.hit)) {
         // If all cells of the same type have been hit, mark all as sunk and display message
-        message(gridCell.type + " destroyed!");
+        sendMessage(gridCell.type + " destroyed!");
         grid
           .flat()
           .filter((c) => c.type === gridCell.type && c.hit)
@@ -213,7 +220,7 @@ function App() {
 
       // Check if all ships have been destroyed
       if (!grid.flat().find((c) => c.type && !c.hit)) {
-        message("GAME OVER");
+        sendMessage("GAME OVER");
         setGameState("GAMEOVER");
         return true;
       }
@@ -268,11 +275,10 @@ function App() {
       }
     }
     setGameState("COMBAT");
-    message("Combat has started!");
+    sendMessage("Combat has started!");
   };
 
   const enemyFire = () => {
-    console.log('enemyFire')
     //calculateProbability(ships, playerGrid);
 
     const targetCells = calculateProbability(ships, playerGrid)
@@ -280,12 +286,10 @@ function App() {
       .filter((c) => c.prob === 1);
     const targetCell = targetCells.pop()!;
 
-    console.log(targetCell)
-
-    const targetList = enemy.targetList
+    const targetList = enemy.targetList;
     targetList.push(targetCell);
 
-    setEnemy({...enemy,targetList})
+    setEnemy({ ...enemy, targetList });
 
     fire(playerGrid, targetCell);
   };
@@ -352,8 +356,10 @@ function App() {
       .reduce((acc, curr) => acc.concat(curr), [])
       .filter((c) => c.count)
       .reduce((acc, curr) => Math.max(acc, curr.count || 0), 0);
-    
-      tempGrid = tempGrid.map((row) => row.map((c) => ({ ...c, prob: c.count! / max })));
+
+    tempGrid = tempGrid.map((row) =>
+      row.map((c) => ({ ...c, prob: c.count! / max }))
+    );
 
     setProbGrid(tempGrid);
     return tempGrid;
@@ -363,31 +369,48 @@ function App() {
       <header className="App-header noselect">
         React Battleship
         <hr />
-        Enemy
-        <Grid grid={enemyGrid} canFire={canFire} showShips={true} onFire={playerFire} onShipPlacement={()=>{}}/>
-        
-        Player
-        <Grid grid={playerGrid} canFire={false} showShips={true} onShipPlacement={handleShipPlacement}  />
-
-        
-        <Dock ships={ships} />
-
-        <div className="probgrid">
-          {probGrid.map((row,i)=>(
+        <div className="game">
+          <div className="console">
+            <Console messages={messages} />
+          </div>
+          <div className="grids">
+            Enemy
+            <Grid
+              grid={enemyGrid}
+              canFire={canFire}
+              showShips={false}
+              onFire={playerFire}
+              onShipPlacement={() => {}}
+            />
+            Player
+            <Grid
+              grid={playerGrid}
+              canFire={false}
+              showShips={true}
+              onShipPlacement={handleShipPlacement}
+            />
+            <Dock ships={ships} />
+          </div>
+        </div>
+        {/* <div className="probgrid">
+          {probGrid.map((row, i) => (
             <div className="row" key={i}>
-              {row.map((cell,j)=>(
-                <div className="prob-cell" key={j} 
-                style={{backgroundColor: 'rgba(1,0,0,'+(1-cell.prob!)+')'}}
+              {row.map((cell, j) => (
+                <div
+                  className="prob-cell"
+                  key={j}
+                  style={{
+                    backgroundColor: "rgba(1,0,0," + (1 - cell.prob!) + ")",
+                  }}
                 ></div>
               ))}
             </div>
           ))}
-        </div>
+        </div> */}
       </header>
     </div>
   );
 }
 
-//[style.background-color]="'rgba(1,1,1,' + cell.prob + ')'"
 
 export default App;
